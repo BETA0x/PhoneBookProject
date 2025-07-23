@@ -1,156 +1,249 @@
 package PhoneBookProject;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.regex.Pattern;
 
 public class PhoneBook {
-    private LinkedHashMap<Integer,String> contacts = new LinkedHashMap<>();
+    private ArrayList<Contact> contacts = new ArrayList<>();
     public int contactsCount = 0;
     private Scanner scan = new Scanner(System.in);
-    private static final Pattern numberPattern = Pattern.compile("\\d{8,}");
+    private static final Pattern phoneNumberPattern = Pattern.compile("5\\d{8}");
     
-    public boolean isValidNumber (String numStr){
-        return numberPattern.matcher(numStr).matches();
-    }
     public void addContact (){
         System.out.println("Enter Contact Name     *Or 0 to back to Main Menu\n");
-        String name = scan.nextLine();
-        if (name.equalsIgnoreCase("0")){
+        String contactName = scan.nextLine();
+        if (contactName.equalsIgnoreCase("0")){
             return;
-        } else {
-            System.out.println("Enter Contact Number 5XXXXXXXX (9 Digits)     *Or 0 to back to Main Menu\n");
-            Integer number = scan.nextInt();
-            scan.nextLine();
-            if (number == 0){
-                return;
-            } else if (contacts.containsKey(number)){
-                System.out.println("\nThe number is Already On!");
-                return;
-            } else if (!isValidNumber(String.valueOf(number))){
-                System.out.println("\nERROR: Number must be 9 digits");
-                return;
-            } else {
-                contactsCount++;
-                contacts.put(number,name);
-                System.out.println("\nContact Added: " + name + " | " + number);
-                return;
-            }
-        }
-    }
-    
-    public void removeContact (){
-        if (!contacts.isEmpty()){
-            System.out.println("Enter Contact number to remove    *Or 0 to back to Main Menu\n");
-            Integer number = scan.nextInt();
-            if( number == 0){
-                return;
-            }
-            if (contacts.containsKey(number)){
-                contacts.remove(number);
-                contactsCount--;
-                System.out.println("");
-                return;
-            } else {
-                System.out.println("\nThere is no contact with "+ number + " number");
-                return;
-            }
-        } else {
-            System.out.println("\nThere is no contact Added yet\n");
+        } else if(!isValidContactName(contactName)){
             return;
-        }
-    }
-    
-    public void changeContact(Integer oldNumber, Integer newNumber, String newName){
-        contacts.remove(oldNumber);
-        contactsCount--;
-        contacts.put(newNumber, newName);
-        System.out.println("\nContact Changed!\n");
-    }
-    
-    public void editContact (){
-        showAllContacts();
-        if (contacts.isEmpty()){
-            return;
-        } else {
-            System.out.println("\nWitch conatct you Want to Edit on? 'BY PHONE NUMBER'      *Or 0 to back to Main Menu\n");
-            Integer number = scan.nextInt();
-            scan.nextLine();
-            if (number == 0){
-                return;
-            } else if (!contacts.containsKey(number)){
-                System.out.println("\nNumber is not Found");
-                return;
-            } else if (!isValidNumber(String.valueOf(number))){
-                System.out.println("\nNumber must be 9 Digits"); 
-                return;
-            } else {
-                System.out.println("\nEnter the new name of contact:      *Or 0 to back to Main Menu\n");
-                String newName = scan.nextLine();
-                if (newName.equalsIgnoreCase("0")){
+            } else{
+                System.out.println("Enter Contact Number 5XXXXXXXX (9 Digits)     *Or 0 to back to Main Menu\n");
+                String phoneNumber = scan.nextLine();
+                if (phoneNumber.contentEquals("0")){
+                    return;
+                } else if (isPhoneNumberExists(phoneNumber)){
+                    System.out.println("\nThe number is Already On!");
+                    return;
+                } else if (!isValidPhoneNumber(phoneNumber)){
+                    System.out.println("\nSorry, Number must be 9 digits, and starts by 5..");
                     return;
                 } else {
-                    System.out.println("\nEnter the new number of contact:      *Or 0 to back to Main Menu\n");
-                    Integer newNum = scan.nextInt();
-                    if (newNum == 0){
-                        return;
-                    } else {
-                        scan.nextLine();
-                        changeContact(number, newNum, newName);
-                        return;
-                    }
+                    contactsCount++;
+                    contacts.add(new Contact(phoneNumber,contactName));
+                    System.out.println("\nContact Added: " + contactName + "\t-\t" + phoneNumber);
+                    return;
+                }
+        }
+    }
+    
+    
+    public void removeContact() {
+        if (contacts.isEmpty()){
+            System.out.println("\nThere is no contact added yet\n");
+            return;
+        } else {
+            showAllContacts();
+            System.out.println("\nWitch conatct you Want to Remove? Enter Phone number 'Or' Contact Name      *Or 0 to back to Main Menu\n");
+            String chooseContact = scan.nextLine();
+            if (chooseContact.equalsIgnoreCase("0")){
+                return;
+            } else {
+                Contact selected = selectContactByInput(chooseContact);
+                if (selected == null){
+                    return;
+                } else {
+                    contacts.remove(selected);
+                    contactsCount--;
+                    System.out.println("\nContact Removed Successfull");
                 }
             }
         }
     }
     
-    public void search4Contact(){
-        if(contacts.isEmpty()){
-            System.out.println("\nThere is no contact Added yet\n");
+    
+    public void updateContact (){
+        if (contacts.isEmpty()){
+            System.out.println("\nThere is no contact added yet\n");
             return;
         } else {
-            System.out.println("Enter The Contact number for Search    *Or 0 to back to Main Menu\n");
-            Integer number = scan.nextInt();
+            showAllContacts();
+            System.out.println("\nWitch conatct you Want to Update on? Enter Phone number 'Or' Contact Name      *Or 0 to back to Main Menu\n");
+            String chooseContact = scan.nextLine();
             
-            if(number == 0){
-                return;
-            } else if (!isValidNumber(String.valueOf(number))){
-                System.out.println("\nERROR: Number must be 9 digits");
-                return;
-            } else if (contacts.containsKey(number)){
-                System.out.println("\nContact Found !\n\nName: " + contacts.get(number) + " - " + number);
+            if (chooseContact.equalsIgnoreCase("0")){
                 return;
             } else {
-                System.out.println("\nThere is no contact with "+ number + " number");
-                return;
-            }
+                Contact selected = selectContactByInput(chooseContact);
+                if(selected == null){
+                    return;
+                } else{
+                System.out.println("What do you want to Update?\n> 1. Name\n> 2. Phone number      *Or 0 to back to Main Menu\n");
+                String choice = scan.nextLine();
+                if (choice.equalsIgnoreCase("0")){
+                    return;
+                } else {
+                    switch(choice){
+                        case "1":
+                            System.out.println("\nEnter the new Name of contact:      *Or 0 to back to Main Menu\n");
+                            String newContactName = scan.nextLine();
+                            if (newContactName.equalsIgnoreCase("0")){
+                                return;
+                            } else {
+                                if (!isValidContactNameUpdate(newContactName)){
+                                    return;
+                                } else {
+                                    selected.setName(newContactName);
+                                    System.out.println("\nContact Name Updated successfull");
+                                    return;
+                                }
+                            }
+                        case "2":
+                            System.out.println("\nEnter the new Contact Number of contact:      *Or 0 to back to Main Menu\n");
+                            String newPhoneNumber = scan.nextLine();
+                            if (newPhoneNumber.equalsIgnoreCase("0")){
+                                return;
+                            } else {
+                                if (isPhoneNumberExists(newPhoneNumber)){
+                                    System.out.println("\nSorry, This number is already exists for another contact");
+                                    return;
+                                } else if(isValidPhoneNumber(newPhoneNumber)){
+                                    System.out.println("\nSorry, Number must be 9 digits, and starts by 5..");
+                                    return;
+                                } else {
+                                    selected.setNumber(newPhoneNumber);
+                                    System.out.println("\nPhone number Upbdated successfull");
+                                }
+                            }
+                        case "0":
+                            return;
+                        default:
+                            System.out.println("\nInvaild Choice");
+                            break;
+                        }
+                    }
+                }   
+            }    
         }
     }
-
-    public void showAllContacts (){
+    
+    
+    public void showAllContacts(){
         if(contacts.isEmpty()){
             System.out.println("\nNo Contact Added Yet");
             return;
         } else {
-            ArrayList<Map.Entry<Integer,String>> contactsList = new ArrayList<>(contacts.entrySet());
-            Collections.sort(contactsList, (a,b) -> a.getValue().compareToIgnoreCase(b.getValue()));
+            contacts.sort((a,b) -> a.getName().compareToIgnoreCase(b.getName()));
+            
             System.out.println("\n========= Your Contacts =========");
             System.out.println("\nAll contacots: " + contactsCount + "\n");
-            for (Map.Entry<Integer, String> e : contactsList){
-                System.out.println(" > " + e.getValue() + " - " + e.getKey() + "\n");
+            for (int i = 0; i < contacts.size(); i++){
+                Contact c = contacts.get(i);
+                System.out.printf("%2d. Name: %-20s | Number: %s\n", i + 1, c.getName(), c.getNumber());
+                System.out.println();
             }
         return;
         }
     }
     
+    
+    
+    
+    private boolean isPhoneNumberExists(String phoneNumber){
+        for (Contact contact : contacts){
+            if (contact.getNumber().equals(phoneNumber)){
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    
+    private boolean isValidPhoneNumber (String phoneNumber){
+        return phoneNumberPattern.matcher(phoneNumber).matches();
+    }
+    
+    private boolean isValidContactName(String contactName){
+        ArrayList<Contact> matchesContacts = getContactsByName(contactName);
+        if (!matchesContacts.isEmpty()){
+            System.out.println("\nThere is a contact/s with the same name --\n");
+            for (Contact c : matchesContacts){
+                System.out.println(c);
+            }
+            System.out.println("\nAre you sure for Adding another Contact with the same name?\n> 1. Keep Adding\n> 0. Cansel");
+            String choice = scan.nextLine();
+            return choice.equalsIgnoreCase("1");
+        }
+        return true;
+    }
+    
+    
+    private boolean isValidContactNameUpdate(String contactName){
+        ArrayList<Contact> matchesContacts = getContactsByName(contactName);
+        if (!matchesContacts.isEmpty()){
+            System.out.println("\nThere is a contact/s with the same name --\n");
+            for (Contact c : matchesContacts){
+                System.out.println(c);
+            }
+            System.out.println("\nAre you sure for Update Contact Name?\n> 1. Keep Updating\n> 0. Cansel");
+            String choice = scan.nextLine();
+            return choice.equalsIgnoreCase("1");
+        }
+        return true;
+    }
+    
+    
+    private ArrayList<Contact> getContactsByName(String contactName){
+        ArrayList<Contact> matchesContacts = new ArrayList<>();
+        for (Contact contact : contacts){
+            if (contact.getName().equalsIgnoreCase(contactName)) {
+                matchesContacts.add(contact);
+            }
+        }
+        return matchesContacts;
+    }
+
+    
+    private Contact selectContactByInput(String input){
+        ArrayList<Contact> matchesContacts = new ArrayList<>();
+        for (Contact c : contacts){
+            if (c.getName().equalsIgnoreCase(input) || c.getNumber().equalsIgnoreCase(input)){
+                matchesContacts.add(c);
+            }
+        }
+        
+        if (matchesContacts.isEmpty()){
+            System.out.println("\nContact not Found");
+            return null;
+        } else if (matchesContacts.size() == 1){
+            return matchesContacts.get(0);
+        } else {
+            System.out.println("\nThere are More then a Contacts with the same name: \n");
+            for (Contact c : matchesContacts){
+                System.out.println("> " + c);
+            }
+            System.out.println("\nEnter the phone number of the contact you want remove      *Or 0 to back to Main Menu\n");
+            String selectedNumber = scan.nextLine();
+            if (selectedNumber.equalsIgnoreCase("0")){
+                return null;
+            } else {
+                for (Contact c : matchesContacts){
+                    if (c.getNumber().equalsIgnoreCase(selectedNumber)){
+                        return c;
+                    }
+                }
+                System.out.println("\nSorry, Number must be 9 digits, and starts by 5..");
+                return null;
+            }
+        }
+    }
+    
+    
+    
     public void run(){
         boolean x = true;
         while (x) {
-            System.out.println("\nPhone Book Menu:\n\n1. Add Contact\n2. Search for Contacts"
-                    + "\n3. Show Your Contacts\n4. Edit Contact \n5. Remove Contact\n0. Exit\n");
+            System.out.println("\nPhone Book Menu:\n\n1. Add Contact\n2. Show All Contacts\n3. Edit Contact \n4. Remove Contact\n0. Exit\n");
             System.out.println("Choose: \n");
             int Ch = scan.nextInt();
             scan.nextLine();
@@ -160,19 +253,19 @@ public class PhoneBook {
                     addContact();
                     break;
                 case 2:
-                    search4Contact();
-                    break;
-                case 3:
                     showAllContacts();
                     break;
-                case 4:
-                    editContact();
+                case 3:
+                    updateContact();
                     break;
-                case 5:
+                case 4:
                     removeContact();
                     break;
                 case 0:
                     x = false;
+                    break;
+                default:
+                    System.out.println("\nInvaild Choice");
                     break;
             }
         }
